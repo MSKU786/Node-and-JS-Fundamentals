@@ -1,24 +1,26 @@
-const fetch = require('node-fetch');
-// function fetchResult() {
-//   return fetch(
-//     'https://mdn.github.io/learning-area/javascript/apis/fetching-data/can-store/products.json'
-//   );
-// }
+/**
+ * Fetching data with promises (real HTTP request)
+ * -------------------------------------------------------------
+ * Walks the typical fetch flow:
+ *   fetch(url) -> Promise<Response>
+ *   response.ok  : check the HTTP status before trusting the body
+ *   response.json() -> Promise<parsedBody>
+ *
+ * This folder is an ES module ("type": "module" in package.json), so we
+ * use `import`, not `require`.
+ *
+ * Requires network access and the node-fetch dependency:
+ *   cd Javascript/Promises && npm install
+ * Run: node Javascript/Promises/promise.js
+ */
 
-// const fetchResponse = fetchResult();
-// console.log(fetchResponse);
+import fetch from 'node-fetch';
 
-// fetchResponse.then((result) => {
-//   const jsonResult = result.json();
-//   jsonResult.then((data) => {
-//     console.log(data);
-//   });
-// });
-const fetchPromise = fetch(
-  'https://mdn.github.io/learning-area/javascript/apis/fetching-data/can-store/products.json'
-);
+const url =
+  'https://mdn.github.io/learning-area/javascript/apis/fetching-data/can-store/products.json';
 
-fetchPromise
+// ---- Demo ----------------------------------------------------
+fetch(url)
   .then((response) => {
     if (!response.ok) {
       throw new Error(`HTTP error: ${response.status}`);
@@ -26,5 +28,8 @@ fetchPromise
     return response.json();
   })
   .then((data) => {
-    console.log(data[0].name);
+    console.log('First product:', data[0].name);
+  })
+  .catch((error) => {
+    console.error('Fetch failed:', error.message);
   });
