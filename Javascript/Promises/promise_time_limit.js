@@ -1,35 +1,45 @@
-/*
-Given an asynchronous function fn and a time t in milliseconds, return a new time limited version of the input function. fn takes arguments provided to the time limited function.
+/**
+ * Time-limit an async function
+ * -------------------------------------------------------------
+ * Problem (LeetCode 2637): given an async function `fn` and a timeout `t`,
+ * return a wrapped version that:
+ *   - resolves with fn's result if fn finishes within t ms, otherwise
+ *   - rejects with "Time Limit Exceeded".
+ *
+ * Technique: race fn's promise against a setTimeout that rejects. Whichever
+ * settles first wins; always clear the timer so it cannot fire late.
+ *
+ * Run: node Javascript/Promises/promise_time_limit.js
+ */
 
-The time limited function should follow these rules:
-
-If the fn completes within the time limit of t milliseconds, the time limited function should resolve with the result.
-If the execution of the fn exceeds the time limit, the time limited function should reject with the string "Time Limit Exceeded".
-*/
-
-var timeLimit = function (fn, t) {
-  const start = performance.now();
+const timeLimit = function (fn, t) {
   return async function (...args) {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        clearTimeout(timeoutId);
         reject('Time Limit Exceeded');
       }, t);
 
       fn(...args)
-        .then((result) => {
-          clearTimeout(timeoutId);
-          resolve(result);
-        })
-        .catch((err) => {
-          clearTimeout(timeoutId);
-          reject(err);
-        });
+        .then(resolve)
+        .catch(reject)
+        .finally(() => clearTimeout(timeoutId));
     });
   };
 };
 
-/**
- * const limited = timeLimit((t) => new Promise(res => setTimeout(res, t)), 100);
- * limited(150).catch(console.log) // "Time Limit Exceeded" at t=100ms
- */
+// ---- Demo ----------------------------------------------------
+// A task that takes `ms` and then resolves with a message.
+const slowTask = (ms) =>
+  new Promise((resolve) => setTimeout(() => resolve(`done in ${ms}ms`), ms));
+
+const limited = timeLimit(slowTask, 200);
+
+// Finishes in time (100ms < 200ms limit) -> resolves.
+limited(100)
+  .then((res) => console.log('resolved:', res)) // resolved: done in 100ms
+  .catch((err) => console.log('rejected:', err));
+
+// Too slow (400ms > 200ms limit) -> rejects.
+limited(400)
+  .then((res) => console.log('resolved:', res))
+  .catch((err) => console.log('rejected:', err)); // rejected: Time Limit Exceeded
