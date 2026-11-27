@@ -1,42 +1,44 @@
-/*
-Given an object or array obj, return a compact object.
+/**
+ * Compact Object — remove falsy values (deeply)
+ * -------------------------------------------------------------
+ * Given an object or array (valid JSON), return a copy with every key whose
+ * value is falsy removed. Applies recursively to nested objects/arrays.
+ * Arrays are treated as objects whose keys are indices, so falsy elements
+ * are dropped and the array is re-packed.
+ *
+ * A value is falsy when Boolean(value) === false:
+ *   false, 0, '', null, undefined, NaN.
+ *
+ * Example:
+ *   compactObject([null, 0, 5, [0], [false, 16]]) -> [5, [], [16]]
+ *
+ * Run: node Javascript/Interview_Questions/compact_object.js
+ */
 
-A compact object is the same as the original object, except with key containing falsy values removed. This operation applies to the object and any nested objects. Arrays are considered objects where the indices are keys. A value is considered falsy when Boolean(value) returns false.
-
-You may assume the obj is the output of JSON.parse. In other words, it is valid JSON.
-*/
-
-var compactObject = function (obj) {
-  // Handle null/undefined
-  if (obj === null || obj === undefined) {
+function compactObject(obj) {
+  // Primitives (and null/undefined): return as-is. A falsy primitive gets
+  // filtered out by its PARENT, not here.
+  if (obj === null || typeof obj !== 'object') {
     return obj;
   }
 
-  // Handle arrays
+  // Arrays: compact each element, then drop the falsy ones.
   if (Array.isArray(obj)) {
-    return obj
-      .map((item) => compactObject(item))
-      .filter((item) => Boolean(item));
+    return obj.map(compactObject).filter(Boolean);
   }
 
-  // Handle objects
-  if (typeof obj === 'object') {
-    const result = {};
-
-    for (const [key, value] of Object.entries(obj)) {
-      const compactedValue = compactObject(value);
-      if (Boolean(compactedValue)) {
-        result[key] = compactedValue;
-      }
+  // Plain objects: compact each value, keep only truthy results.
+  const result = {};
+  for (const [key, value] of Object.entries(obj)) {
+    const compacted = compactObject(value);
+    if (compacted) {
+      result[key] = compacted;
     }
-
-    return result;
   }
+  return result;
+}
 
-  // Handle primitives - return as is (falsy values will be filtered out)
-  return obj;
-};
-
-console.log(compactObject([null, 0, false, 1]));
-console.log(compactObject({ a: null, b: [false, 1] }));
-console.log(compactObject([null, 0, 5, [0], [false, 16]]));
+// ---- Demo ----------------------------------------------------
+console.log(compactObject([null, 0, false, 1])); // [ 1 ]
+console.log(compactObject({ a: null, b: [false, 1] })); // { b: [ 1 ] }
+console.log(compactObject([null, 0, 5, [0], [false, 16]])); // [ 5, [], [ 16 ] ]
